@@ -1,0 +1,13 @@
+[package]
+name = "r32_clock_gauge"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+eframe = "0.27"
+egui = "0.24"
+# [dependencies]
+# embedded-graphics = "0.8.1"
+# embedded-graphics-core = "0.4.0"
+# embedded-graphics-simulator = "0.5.0"
+
