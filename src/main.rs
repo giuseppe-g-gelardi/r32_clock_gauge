@@ -47,21 +47,13 @@ impl Screen {
 
 struct AppState {
     screen: Screen,
-
-    // These will later come from CAN data
-    boost: f32,
-    oil_temp: f32,
-    oil_press: f32,
-    fuel_press: f32,
-    coolant: f32,
-    afr: f32,
-    ign_timing: f32,
-    duty: f32,
-    ethanol: f32,
+    data: EngineData,
 }
 
 impl eframe::App for AppState {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        let time = ctx.input(|i| i.time as f32);
+        self.data = generate_mock_data(time);
         // --- KEY INPUTS FOR SCREEN SWITCHING ---
         if ctx.input(|i| i.key_pressed(egui::Key::ArrowRight)) {
             self.screen = self.screen.next();
@@ -71,32 +63,19 @@ impl eframe::App for AppState {
         }
 
         egui::CentralPanel::default().show(ctx, |ui| {
-            // ui.vertical_centered(
             ui.with_layout(
                 egui::Layout::centered_and_justified(egui::Direction::TopDown),
                 |ui| {
-                    // ui.add_space(40.0);
-
                     let text = match self.screen {
-                        Screen::Boost => format!("Boost: {:.1} psi", self.boost),
-
-                        Screen::OilTemp => format!("Oil Temp: {:.0} °C", self.oil_temp),
-
-                        Screen::OilPressure => format!("Oil Pressure: {:.1} bar", self.oil_press),
-
-                        Screen::FuelPressure => {
-                            format!("Fuel Pressure: {:.1} bar", self.fuel_press)
-                        }
-
-                        Screen::CoolantTemp => format!("Coolant: {:.0} °C", self.coolant),
-
-                        Screen::Afr => format!("AFR: {:.1}", self.afr),
-
-                        Screen::IgnitionTiming => format!("Timing: {:.1}°", self.ign_timing),
-
-                        Screen::FuelDuty => format!("Duty: {:.0}%", self.duty),
-
-                        Screen::Ethanol => format!("Ethanol: {:.0}%", self.ethanol),
+                        Screen::Boost => format!("Boost: {:.1} psi", self.data.boost_psi),
+                        Screen::OilTemp => format!("Oil Temp: {:.0} °C", self.data.oil_temp_c),
+                        Screen::OilPressure => format!("Oil Pressure: {:.1} bar", self.data.oil_pressure_bar),
+                        Screen::FuelPressure => format!("Fuel Pressure: {:.1} bar", self.data.fuel_pressure_bar),
+                        Screen::CoolantTemp => format!("Coolant: {:.0} °C", self.data.coolant_temp_c),
+                        Screen::Afr => format!("AFR: {:.1}", self.data.afr),
+                        Screen::IgnitionTiming => format!("Timing: {:.1}°", self.data.ignition_timing_deg),
+                        Screen::FuelDuty => format!("Duty: {:.0}%", self.data.fuel_duty_percent),
+                        Screen::Ethanol => format!("Ethanol: {:.0}%", self.data.ethanol_percent),
                     };
 
                     // Large centered display text
@@ -123,18 +102,35 @@ fn main() -> eframe::Result<()> {
         Box::new(|_cc| {
             Box::new(AppState {
                 screen: Screen::Boost,
-
-                // mock data for now
-                boost: 18.2,
-                oil_temp: 87.0,
-                oil_press: 4.3,
-                fuel_press: 3.8,
-                coolant: 82.0,
-                afr: 11.2,
-                ign_timing: 18.0,
-                duty: 56.0,
-                ethanol: 73.0,
+                data: generate_mock_data(0.0),
             })
         }),
     )
+}
+
+#[derive(Debug, Clone)]
+struct EngineData {
+    boost_psi: f32,
+    oil_temp_c: f32,
+    oil_pressure_bar: f32,
+    fuel_pressure_bar: f32,
+    coolant_temp_c: f32,
+    afr: f32,
+    ignition_timing_deg: f32,
+    fuel_duty_percent: f32,
+    ethanol_percent: f32,
+}
+
+fn generate_mock_data(t: f32) -> EngineData {
+    EngineData {
+        boost_psi: 12.0 + (t * 0.5).sin() * 6.0, // -6 → +6 psi variation
+        oil_temp_c: 80.0 + (t * 0.1).sin() * 3.0,
+        oil_pressure_bar: 3.8 + (t * 0.7).sin() * 0.5,
+        fuel_pressure_bar: 3.5 + (t * 0.3).sin() * 0.3,
+        coolant_temp_c: 82.0 + (t * 0.03).sin() * 1.0,
+        afr: 11.8 + (t * 0.2).sin() * 0.4,
+        ignition_timing_deg: 18.0 + (t * 0.5).sin() * 4.0,
+        fuel_duty_percent: 45.0 + (t * 0.8).sin() * 20.0,
+        ethanol_percent: 70.0,
+    }
 }
